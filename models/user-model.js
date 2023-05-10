@@ -15,9 +15,7 @@ const userSchema = new Schema({
             if (profilePic) {
                 return `${BASE_URL}/${profilePic}`;
             }
-
             return profilePic;
-
         }
     },
 

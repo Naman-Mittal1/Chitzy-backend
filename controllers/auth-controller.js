@@ -261,8 +261,35 @@ class AuthController {
     async passportAuthenticate(req, res) {
         try {
             console.log(req.user);
-            // const user = await UserModel.findOne({})
-            res.status(200).json({ user: req.user });
+            console.log(req.user.emails[0].value);
+            const existingUser = await UserModel.findOne({
+                email: req.user.emails[0].value
+            });
+
+            if (!existingUser) {
+                return res.status(404).json({ error: USER_NOT_FOUND_ERR });
+            }
+            console.log(existingUser);
+
+            const accessToken = tokenService.generateAccessToken({ userId: existingUser._id });
+            const refreshToken = tokenService.generateRefreshToken({ userId: existingUser._id });
+
+
+            await tokenService.storeRefreshToken(refreshToken, existingUser._id);
+            res.cookie('refreshToken', refreshToken, {
+                maxAge: 1000 * 60 * 60 * 24 * 30,
+                httpOnly: true
+            });
+
+            res.cookie('accessToken', accessToken, {
+                maxAge: 1000 * 60 * 60 * 24 * 30,
+                httpOnly: true
+            });
+
+            const userDto = new UserDto(existingUser);
+            console.log(userDto);
+            res.send(userDto);
+
         } catch (err) {
             console.log(err);
         }

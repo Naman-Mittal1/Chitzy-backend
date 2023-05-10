@@ -17,7 +17,8 @@ passport.serializeUser(function(user, done) {
     done(null, user.id);
 });
 
-passport.deserializeUser(async function(user, done) {
+passport.deserializeUser(async function(id, done) {
+    const user = await UserModel.findById(id);
     done(null, user);
 });
 
