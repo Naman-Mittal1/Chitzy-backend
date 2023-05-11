@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const authRoute = require('./routes/auth-route');
 const oauthRouter = require('./routes/oauth-route');
 const conversationRoute = require('./routes/conversation-route');
+const messageRoute = require('./routes/message-route');
 const dbConnect = require('./db/conn');
 
 
@@ -49,6 +50,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoute);
 app.use(oauthRouter);
 app.use('/api/conversation', conversationRoute);
+app.use('/api/message', messageRoute);
 
 
 server.listen(PORT, HOST, function(err) {
