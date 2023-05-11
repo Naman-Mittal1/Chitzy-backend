@@ -4,7 +4,7 @@ const { BASE_URL } = require('../config');
 
 const userSchema = new Schema({
     name: { type: String, required: false },
-    username: { type: String, required: true, unique: true },
+    username: { type: String, required: false, unique: true, default: "" },
     email: { type: String, required: true },
     phone: { type: String, required: false },
 
@@ -21,7 +21,7 @@ const userSchema = new Schema({
 
     password: {
         type: String,
-        required: true
+        required: false
     },
     activated: { type: Boolean, required: true, default: false },
     verified: { type: Boolean, required: true, default: false },

@@ -15,7 +15,7 @@ class AuthController {
             if (!errors.isEmpty()) {
                 return res.status(422).json({ errors: errors.array() });
             }
-            const { name, username, email, password } = req.body;
+            const { name, email, password } = req.body;
             let { phone } = req.body;
 
             if (!phone) {
@@ -29,7 +29,7 @@ class AuthController {
             }
 
             const hashedPassword = await hashService.hashPassword(password);
-            user = new UserModel({ name, email, password: hashedPassword, username });
+            user = new UserModel({ name, email, password: hashedPassword });
             await user.save();
 
             // const { accessToken, refreshToken } = tokenService.generateTokens({ _id: user._id, activated: false });
