@@ -14,7 +14,7 @@ class UserDto {
     constructor(user) {
         this._id = user._id;
         this.name = user.name;
-        this.username = user.username;
+        this.username = user.username.toLowerCase();
         this.phone = user.phone;
         this.email = user.email;
         this.profilePic = user.profilePic;

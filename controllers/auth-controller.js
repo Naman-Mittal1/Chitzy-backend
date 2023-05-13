@@ -1,12 +1,15 @@
 const passport = require('passport');
 const { USER_ALREADY_EXISTS } = require("../constant");
-const { SOMETHING_WENT_WRONG, INVALID_CREDENTIALS, WRONG_PASSWORD, JWT_DECODE_ERR, USER_NOT_FOUND_ERR } = require('../errors');
+const { SOMETHING_WENT_WRONG, INVALID_CREDENTIALS, WRONG_PASSWORD, JWT_DECODE_ERR, USER_NOT_FOUND_ERR, WRONG_OTP_ERR, OTP_EXPIRING_ERR, DATABASE_ERR } = require('../errors');
 const validationService = require("../services/validation-service");
 const hashService = require('../services/hash-service');
 const tokenService = require('../services/token-service');
 const UserModel = require('../models/user-model');
 const UserDto = require('../dtos/user-dto');
 const mailService = require("../services/mail-service");
+const { MESSGE_SENDING_FAILED } = require('../errors');
+const otpService = require('../services/otp-service');
+const userService = require('../services/user-service');
 
 class AuthController {
     async register(req, res) {
@@ -29,30 +32,16 @@ class AuthController {
             }
 
             const hashedPassword = await hashService.hashPassword(password);
-            user = new UserModel({ name, email, password: hashedPassword });
-            await user.save();
 
-            // const { accessToken, refreshToken } = tokenService.generateTokens({ _id: user._id, activated: false });
-            const accessToken = tokenService.generateAccessToken({ userId: user._id });
+            await mailService.sendVerificationCode(name, email);
 
-            //     const mailOptions = {
-            //         from: process.env.EMAIL_USER,
-            //         to: email,
-            //         subject: 'Chitzy Email Verification',
-            //         html: `
-            //   <p>Hi ${name},</p>
-            //   <p>Thank you for registering with Chitzy</p>
-            //   <p>Please click <a href="${process.env.CLIENT_URL}/auth/verify/${accessToken}">here</a> to verify your email address.</p>
-            //   <p>If you did not request this, please ignore this email.</p>
-            //   <p>Regards,</p>
-            //   <p>Team Chitzy</p>
-            // `,
-            //     };
 
-            //     mailService.sendMail(mailOptions);
+            return res.status(200).json({ message: "Verification Code sent to email" });
+            // user = new UserModel({ name, email, password: hashedPassword });
+            // await user.save();
 
-            const userDto = new UserDto(user);
-            res.json({ user: userDto, auth: true, accessToken, message: "User registered successfully" });
+            // const userDto = new UserDto(user);
+            // res.json({ user: userDto, auth: true, accessToken, message: "User registered successfully" });
 
         } catch (err) {
             console.log(err);
@@ -60,35 +49,86 @@ class AuthController {
         }
     }
 
+    async sendOTP(req, res) {
+        const { email } = req.body;
+        if (!email) {
+            res.status(400).json({ error: "Email Field is required" });
+        }
 
-    async verify(req, res) {
+
+        let user = await UserModel.findOne({ email });
+        if (user) {
+            return res.status(409).json({ message: USER_ALREADY_EXISTS });
+        }
+
+
+        const otp = await otpService.generateOTP();
+        const otpExpirationTimeInMinutes = 10;
+        const ttl = 1000 * 60 * otpExpirationTimeInMinutes; // Time to leave
+        const expires = Date.now() + ttl;
+        const data = `${email}.${otp}.${expires}`;
+        const otpHash = hashService.hashOTP(data);
+
         try {
-            const accessToken = req.params.token;
+            // mail send ka code aayega
+            console.log({ hash: `${otpHash}.${expires}`, email, otp });
+            return res.json({ hash: `${otpHash}.${expires}`, email, otp });
+        } catch (err) {
+            console.log(err);
+            res.status(500).json({ error: MESSGE_SENDING_FAILED });
+        }
+    }
 
-            const decoded = await tokenService.verifyAccessToken(accessToken);
-            const userId = decoded.userId;
 
-            const user = await UserModel.findByIdAndUpdate(userId, { verified: true }, { new: true });
+    async verifyOTP(req, res) {
+        const { otp, hash, email } = req.body;
+        try {
+            if (!otp) {
+                res.status(400).json({ error: "OTP is required" });
+            }
 
-            const refreshToken = tokenService.generateRefreshToken({ userId })
+            if (!hash) {
+                res.status(400).json({ error: "Hash is required" });
+            }
 
-            await tokenService.storeRefreshToken(refreshToken, userId);
-            res.cookie('refreshToken', refreshToken, {
-                maxAge: 1000 * 60 * 60 * 24 * 30,
-                httpOnly: true
-            });
+            if (!email) {
+                res.status(400).json({ error: "Email is required" });
+            }
 
-            res.cookie('accessToken', accessToken, {
-                maxAge: 1000 * 60 * 60 * 24 * 30,
-                httpOnly: true
-            });
 
-            const userDto = new UserDto(user);
-            res.json({ user: userDto, auth: true, verified: true, accessToken, message: "Email verified" });
+            const [hashedOTP, expires] = hash.split('.');
+            if (Date.now() > +expires) {
+                res.status(400).json({ error: OTP_EXPIRING_ERR })
+            }
+
+            const data = `${email}.${otp}.${expires}`;
+            const isValid = otpService.verifyOTP(hashedOTP, data);
+
+            if (!isValid) {
+                return res.status(400).json({ error: WRONG_OTP_ERR });
+            }
+
+
         } catch (err) {
             console.log(err);
             res.status(500).json({ message: SOMETHING_WENT_WRONG });
         }
+
+        try {
+
+            let user;
+            user = await userService.findUser({ email });
+            if (!user) {
+                user = await userService.createUser({ email, verified: true });
+            }
+
+            return res.status(200).json({ message: "Email verified successfully", user: new UserDto(user) });
+        } catch (err) {
+            console.log(err);
+            res.status(500).json({ message: DATABASE_ERR });
+        }
+
+
 
     }
 
@@ -172,9 +212,8 @@ class AuthController {
             if (!user.verified) {
                 return res.status(403).json({ message: 'Email not verified' });
             }
+            const { accessToken, refreshToken } = tokenService.generateTokens({ userId: user._id });
 
-            const accessToken = tokenService.generateAccessToken({ userId: user._id });
-            const refreshToken = tokenService.generateRefreshToken({ userId: user._id });
 
 
             await tokenService.storeRefreshToken(refreshToken, user._id);
