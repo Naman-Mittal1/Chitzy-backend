@@ -5,20 +5,6 @@ const { BASE_URL } = require('../config');
 const userSchema = new Schema({
     name: { type: String, required: false },
     username: { type: String, default: "" },
-    // username: {
-    //     type: String,
-    //     default: "",
-    //     validate: {
-    //         validator: async function(value) {
-    //             if (value !== "") {
-    //                 const existingUser = await this.constructor.findOne({ username: value });
-    //                 return !existingUser;
-    //             }
-    //             return true;
-    //         },
-    //         message: 'Username must be unique',
-    //     },
-    // },
     email: { type: String, required: true },
     phone: { type: String, required: false },
 

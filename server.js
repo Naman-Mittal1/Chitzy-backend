@@ -45,7 +45,7 @@ app.get('/auth/logout', async(req, res) => {
 app.use('/storage', express.static('storage'));
 
 
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/auth', authRoute);
