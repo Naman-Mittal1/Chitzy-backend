@@ -1,4 +1,4 @@
-const { MESSGE_SENDING_FAILED } = require("../errors");
+const { MESSGE_SENDING_FAILED, CONVERSATION_NOT_FOUND_ERR } = require("../errors");
 const ConversationModel = require("../models/conversation-model");
 const MessageModel = require("../models/message-model");
 
@@ -40,7 +40,7 @@ class MessageController {
             });
 
             if (!conversation) {
-                return res.status(404).json({ error: 'Conversation not found' });
+                return res.status(404).json({ error: CONVERSATION_NOT_FOUND_ERR });
             }
 
             res.status(200).json({ messages: conversation.messages });
@@ -52,7 +52,7 @@ class MessageController {
 
     async createReply(req, res) {
         try {
-            const { content } = req.body;
+            const { conversationId, senderId, content } = req.body;
             const { parentMessage } = req.params;
 
             const reply = new MessageModel({
@@ -92,7 +92,7 @@ class MessageController {
 
             const conversation = await ConversationModel.findById(conversationId);
             if (!conversation) {
-                return res.status(404).json({ error: 'Conversation not found' });
+                return res.status(404).json({ error: CONVERSATION_NOT_FOUND_ERR });
             }
 
             const message = await MessageModel.findById(messageId);
@@ -106,14 +106,37 @@ class MessageController {
             }
 
             message.pinned = pinned;
+
+            if (pinned) {
+                await ConversationModel.findByIdAndUpdate(
+                    conversationId, { $push: { pinnedMessages: messageId } }, { new: true }
+                );
+            }
             await message.save();
 
             const action = pinned ? 'pinned' : 'unpinned';
             res.status(200).json({ message: `Message ${action} successfully` });
         } catch (error) {
             console.log(error);
-            res.status(500).json({ error: 'FFailed to toggle pin for message' });
+            res.status(500).json({ error: 'Failed to toggle pin for message' });
         }
+    }
+
+    async getPinnedMessages(req, res) {
+        try {
+            const { conversationId } = req.params;
+            const conversation = await ConversationModel.findById(conversationId);
+            if (!conversation) {
+                return res.status(404).json({ error: CONVERSATION_NOT_FOUND_ERR });
+            }
+
+            return res.json({ pinnedMessages: conversation.pinnedMessages });
+        } catch (err) {
+            console.log(err);
+            res.status(500).json({ error: 'Failed to retrieve pinned messages' });
+        }
+
+
     }
 }
 
