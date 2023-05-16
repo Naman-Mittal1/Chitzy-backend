@@ -23,6 +23,9 @@ const userSchema = new Schema({
         type: String,
         required: false
     },
+    bio: {
+        type: String,
+    },
     activated: { type: Boolean, required: true, default: false },
     verified: { type: Boolean, required: true, default: false },
     premium: { type: Boolean, required: true, default: false },

@@ -4,7 +4,6 @@ const { JWT_DECODE_ERR } = require('../errors');
 module.exports = async function(req, res, next) {
     try {
         const { accessToken } = req.cookies;
-        console.log(accessToken);
         if (!accessToken) {
             return res.status(401).json({ message: 'No token, authorization denied' });
         }

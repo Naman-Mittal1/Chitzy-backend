@@ -11,3 +11,24 @@ exports.validateLoginSchema = [
     body('usernameOrEmail').notEmpty().withMessage('Username or email is required'),
     body('password').trim().notEmpty().withMessage('Password is required'),
 ];
+
+
+const forbiddenValues = [
+    '_id',
+    'email',
+    'activated',
+    'verified',
+    'premium',
+    'status',
+    'createdAt',
+    'updatedAt',
+    '__v',
+    'password'
+];
+
+exports.updateUserProfileSchema = [
+    body('type')
+    .not()
+    .isIn(forbiddenValues)
+    .withMessage('Invalid type')
+]
