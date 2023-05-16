@@ -4,7 +4,7 @@ const { BASE_URL } = require('../config');
 
 const userSchema = new Schema({
     name: { type: String, required: false },
-    username: { type: String, required: false, unique: true, default: "" },
+    username: { type: String, default: "" },
     email: { type: String, required: true },
     phone: { type: String, required: false },
 
@@ -35,5 +35,12 @@ const userSchema = new Schema({
     resetTokenExpiry: Date,
 
 }, { timestamps: true, toJSON: { getters: true } });
+
+
+userSchema.pre('save', function(next) {
+    // Convert the username to lowercase
+    this.username = this.username.toLowerCase();
+    next();
+});
 
 module.exports = mongoose.model('User', userSchema, 'users');

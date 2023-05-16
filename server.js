@@ -5,13 +5,12 @@ const app = express();
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const authRoute = require('./routes/auth-route');
+const activateRoute = require('./routes/activate-route');
 const oauthRouter = require('./routes/oauth-route');
 const conversationRoute = require('./routes/conversation-route');
 const messageRoute = require('./routes/message-route');
 const dbConnect = require('./db/conn');
 
-
-// Temp imports
 
 const tokenService = require('./services/token-service');
 
@@ -43,11 +42,14 @@ app.get('/auth/logout', async(req, res) => {
     res.json({ user: null });
 });
 
+app.use('/storage', express.static('storage'));
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/auth', authRoute);
+app.use('/api/activate', activateRoute);
 app.use(oauthRouter);
 app.use('/api/conversation', conversationRoute);
 app.use('/api/message', messageRoute);

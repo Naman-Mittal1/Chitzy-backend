@@ -3,22 +3,35 @@ const { JWT_ACCESS_TOKEN_SECRET_KEY, JWT_REFRESH_TOKEN_SECRET_KEY } = require('.
 const RefreshModel = require('../models/refresh-model');
 
 class TokenService {
-    generateAccessToken(payload) {
+    // generateAccessToken(payload) {
+    //     const accessToken = jwt.sign(payload, JWT_ACCESS_TOKEN_SECRET_KEY, {
+    //         expiresIn: '1m'
+    //     });
+
+
+
+    //     return accessToken;
+    // }
+
+    // generateRefreshToken(payload) {
+    //     const refreshToken = jwt.sign(payload, JWT_REFRESH_TOKEN_SECRET_KEY, {
+    //         expiresIn: '1y'
+    //     });
+
+    //     return refreshToken;
+    // }
+
+
+    generateTokens(payload) {
         const accessToken = jwt.sign(payload, JWT_ACCESS_TOKEN_SECRET_KEY, {
             expiresIn: '1m'
         });
 
-
-
-        return accessToken;
-    }
-
-    generateRefreshToken(payload) {
         const refreshToken = jwt.sign(payload, JWT_REFRESH_TOKEN_SECRET_KEY, {
             expiresIn: '1y'
         });
 
-        return refreshToken;
+        return { accessToken, refreshToken };
     }
 
     async verifyAccessToken(token) {

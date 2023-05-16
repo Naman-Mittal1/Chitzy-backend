@@ -9,8 +9,10 @@ const session = require('express-session');
 const authMiddleware = require('../middlewares/auth-middleware');
 
 
-router.post('/register', createUserSchema, authController.register);
-router.get('/verify/:token', authController.verify);
+router.post('/sendOTP', authController.sendOTP);
+router.post('/verifyOTP', authController.verifyOTP);
+// router.post('/register', createUserSchema, authController.register);
+// router.get('/verify/:token', authController.verify);
 router.post('/refresh', authController.refresh);
 router.post('/login', validateLoginSchema, authController.login);
 router.post('/forgotPassword', authController.forgotPassword);

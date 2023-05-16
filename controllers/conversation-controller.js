@@ -48,7 +48,7 @@ class ConversationController {
     async getConversation(req, res) {
         const userId = req.params.userId;
         try {
-            const conversations = await Conversation.find({ participants: userId }).populate('participants');
+            const conversations = await ConversationModel.find({ participants: userId }).populate('participants');
             res.status(200).json({ conversations });
         } catch (err) {
             console.log(err);
