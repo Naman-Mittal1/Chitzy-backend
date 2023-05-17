@@ -12,4 +12,8 @@ router.get('/:messageId/replies', authMiddleware, messageController.getReplies);
 
 router.post('/pin/:pinned/:conversationId/:messageId', authMiddleware, messageController.togglePinMessage);
 
+router.delete('/delete/:messageId', authMiddleware, messageController.deleteMessage);
+
+router.post('/markAsRead/:messageId/:userId', authMiddleware, messageController.markAsRead);
+
 module.exports = router;

@@ -10,3 +10,4 @@ exports.WRONG_OTP_ERR = "Invalid OTP";
 exports.DATABASE_ERR = "Database Error Occured";
 exports.IMAGE_PROCESSING_ERR = "Could not process the image";
 exports.CONVERSATION_NOT_FOUND_ERR = "Conversation not found";
+exports.MESSAGE_NOT_FOUND_ERR = "Message not found";

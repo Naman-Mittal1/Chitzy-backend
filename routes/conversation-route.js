@@ -7,8 +7,9 @@ const router = require('express').Router();
 
 router.get('/', authMiddleware, conversationController.getAllConversations);
 router.post('/addConversation', authMiddleware, conversationController.addConversation);
-router.get('/:userId', conversationController.getConversations);
-router.put('leaveGroup/:conversationId/:userId', groupChatController.leaveGroupChat);
+router.get('/:userId', authMiddleware, conversationController.getConversations);
+router.put('leaveGroup/:conversationId/:userId', authMiddleware, groupChatController.leaveGroupChat);
+router.put('removeParticipant/:conversationId/:participantId', authMiddleware, groupChatController.removeParticipant);
 
 
 

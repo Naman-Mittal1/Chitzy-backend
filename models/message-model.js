@@ -12,7 +12,14 @@ const messageSchema = new Schema({
         ref: 'Message',
         default: null
     },
-    pinned: { type: Boolean, default: false }
+    pinned: { type: Boolean, default: false },
+    reactions: {
+        userId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+        reaction: {
+            type: String
+        }
+    },
+    readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 }, { timestamps: true });
 
 
