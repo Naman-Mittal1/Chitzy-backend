@@ -1,4 +1,4 @@
-const { MESSGE_SENDING_FAILED, CONVERSATION_NOT_FOUND_ERR } = require("../errors");
+const { MESSGE_SENDING_FAILED, CONVERSATION_NOT_FOUND_ERR, MESSAGE_NOT_FOUND_ERR } = require("../errors");
 const ConversationModel = require("../models/conversation-model");
 const MessageModel = require("../models/message-model");
 
@@ -11,6 +11,7 @@ class MessageController {
                 conversationId,
                 senderId,
                 content,
+                readBy: [senderId]
             });
 
             const savedMessage = await newMesage.save();
@@ -60,7 +61,7 @@ class MessageController {
                 senderId,
                 content,
                 parentMessage,
-
+                readBy: [senderId]
             });
 
             await reply.save();
@@ -97,7 +98,7 @@ class MessageController {
 
             const message = await MessageModel.findById(messageId);
             if (!message) {
-                return res.status(404).json({ error: 'Message not found' });
+                return res.status(404).json({ error: MESSAGE_NOT_FOUND_ERR });
             }
 
             if (message.pinned === pinned) {
@@ -138,6 +139,72 @@ class MessageController {
 
 
     }
+
+
+    async toggleReaction(req, res) {
+        try {
+            const { messageId } = req.params;
+            const { userId, reaction } = req.body;
+
+            const message = await MessageModel.findById(messageId);
+            if (!message) {
+                return res.status(404).json({ error: MESSAGE_NOT_FOUND_ERR });
+            }
+
+            message.reactions.push({ userId, reaction });
+            await message.save();
+
+            res.status(200).json({ message });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Failed to add reaction to message' });
+        }
+    }
+
+
+    async deleteMessage(req, res) {
+        try {
+            const { messageId } = req.params;
+
+            const message = await MessageModel.findByIdAndDelete(messageId);
+            if (!message) {
+                return res.status(404).json({ error: MESSAGE_NOT_FOUND_ERR });
+            }
+
+            const conversation = await ConversationModel.findById(message.conversationId);
+            conversation.messages = conversation.messages.filter(id => id.toString() !== messageId);
+            await conversation.save();
+
+            res.status(200).json({ message: 'Message deleted successfully' });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Failed to delete message' });
+        }
+    }
+
+
+    async markAsRead(req, res) {
+        try {
+            const { messageId, userId } = req.params;
+
+            const message = await MessageModel.findById(messageId);
+            if (!message) {
+                return res.status(404).json({ error: MESSAGE_NOT_FOUND_ERR });
+            }
+
+            if (!message.readBy.includes(userId)) {
+                message.readBy.push(userId);
+                await message.save();
+            }
+
+            res.status(200).json({ message: 'Message marked as read' });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Failed to mark the message as read' });
+        }
+    }
+
+
 }
 
 module.exports = new MessageController();

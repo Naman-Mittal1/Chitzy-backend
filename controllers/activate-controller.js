@@ -18,9 +18,6 @@ class ActivateController {
             const { name, email, phone, password, username, profilePic } = req.body;
 
 
-            if (!phone) {
-                phone = "";
-            }
 
             let user = await UserModel.findOne({ email });
             if (!user) {
@@ -53,7 +50,7 @@ class ActivateController {
 
 
             user.name = name;
-            user.phone = phone;
+            user.phone = phone ? phone : "";
             user.password = hashedPassword;
             user.username = username;
             user.activated = true;
