@@ -118,6 +118,7 @@ class AuthController {
 
             let user;
             user = await userService.findUser({ email });
+            
             if (!user) {
                 user = await userService.createUser({ email, verified: true });
             }
