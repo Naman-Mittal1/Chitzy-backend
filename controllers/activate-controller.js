@@ -1,12 +1,16 @@
 const { USER_ALREADY_EXISTS } = require("../constant");
+const fs = require('fs');
 const UserDto = require("../dtos/user-dto");
-const { IMAGE_PROCESSING_ERR, SOMETHING_WENT_WRONG } = require("../errors");
+const { IMAGE_PROCESSING_ERR, SOMETHING_WENT_WRONG, USER_NOT_FOUND_ERR } = require("../errors");
 const UserModel = require("../models/user-model");
 const hashService = require("../services/hash-service");
 const jimp = require('jimp');
 const path = require('path');
 const imageService = require("../services/image-service");
 const tokenService = require("../services/token-service");
+const crypto = require('crypto');
+const encryptionService = require("../services/encryption-service");
+const { IMAGE_ENCRYPTION_KEY } = require("../config");
 class ActivateController {
     async activate(req, res) {
         try {
@@ -15,13 +19,16 @@ class ActivateController {
             //     return res.status(422).json({ errors: errors.array() });
             // }
 
-            const { name, email, phone, password, username, profilePic } = req.body;
+            const profilePic = req.file.buffer;
+            // const { name, email, phone, password, username } = req.dataObj;
 
+            const { name, email, phone, password, username } = JSON.parse(req.body.jsonPayload);
+            console.log(name, email, phone, password, username, profilePic);
 
 
             let user = await UserModel.findOne({ email });
             if (!user) {
-                return res.status(409).json({ message: USER_ALREADY_EXISTS });
+                return res.status(409).json({ message: USER_NOT_FOUND_ERR });
             }
 
             const usernameCheck = await UserModel.findOne({
@@ -34,12 +41,11 @@ class ActivateController {
 
             const hashedPassword = await hashService.hashPassword(password);
 
+            const imagePath = `${Date.now()}.${Math.round(Math.random() * 1e9)}.png`;
             if (profilePic !== "") {
-                const profilePicBase64 = await imageService.convertBlobUrlToBase64(profilePic);
-                const buffer = Buffer.from(profilePicBase64.replace(/^data:image\/(png|jpg|jpeg);base64,/, ''), 'base64');
-                const imagePath = `${Date.now()}.${Math.round(Math.random() * 1e9)}.png`;
+                // const buffer = Buffer.from(profilePic.replace(/^data:image\/(png|jpg|jpeg);base64,/, ''), 'base64');
                 try {
-                    const jimpResp = await jimp.read(buffer);
+                    const jimpResp = await jimp.read(profilePic);
                     jimpResp.resize(150, jimp.AUTO).write(path.resolve(__dirname, `../storage/${imagePath}`));
                 } catch (err) {
                     console.log(err);
@@ -54,7 +60,6 @@ class ActivateController {
             user.password = hashedPassword;
             user.username = username;
             user.activated = true;
-            // user.profilePic = ``;
             user.profilePic = profilePic === "" ? "" : `/storage/${imagePath}`;
 
             await user.save();

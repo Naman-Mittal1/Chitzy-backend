@@ -1,7 +1,10 @@
-const axios = require('axios');
-// const fetch = require('node-fetch');
 const fs = require('fs');
-const { Readable } = require('stream');
+const path = require('path');
+const axios = require('axios');
+// const { fetchBlob } = require('fetch-blob');
+const http = require('http');
+// const request = require('request');
+// const fetch = require('node-fetch');
 class ImageService {
 
     async convertBlobUrlToBase64(blobUrl) {
@@ -79,6 +82,35 @@ class ImageService {
     //         console.error('Error converting Blob URL to Base64:', error);
     //         throw error;
     //     }
+    // }
+
+
+    // saveBlobToFile(blobUrl, storagePath) {
+    //     return new Promise((resolve, reject) => {
+    //         const writeStream = fs.createWriteStream(storagePath);
+    //         const requestOptions = {
+    //             url: blobUrl,
+    //             encoding: null // Preserve response as a buffer
+    //         };
+
+    //         const req = request(requestOptions);
+    //         req.on('response', (response) => {
+    //             if (response.statusCode !== 200) {
+    //                 reject(new Error(`Failed to download Blob. Status code: ${response.statusCode}`));
+    //                 return;
+    //             }
+
+    //             response.pipe(writeStream);
+    //             writeStream.on('finish', () => {
+    //                 writeStream.close();
+    //                 resolve();
+    //             });
+    //         });
+
+    //         req.on('error', (error) => {
+    //             reject(error);
+    //         });
+    //     });
     // }
 
 
